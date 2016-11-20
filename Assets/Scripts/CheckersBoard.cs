@@ -12,23 +12,24 @@ public class CheckersBoard : MonoBehaviour
     public Vector2 pieceOffset;
 
     private Vector2 mouseOver;
-    private Vector2 startDrag;
-    private Vector2 endDrag;
+    private Vector2 startDrag = new Vector2(-1, -1);
+    private Vector2 endDrag = new Vector2(-1, -1);
 
+    private bool isWhite;
+    private bool isWhiteTurn;
     private Piece selectedPiece;
-
-    public Text mouseText;
 
     // Use this for initialization
     void Start()
     {
+        isWhiteTurn = true;
         GenerateBoard();
     }
 
     private void GenerateBoard()
     {
         boardOffset = new Vector2(-4f, -4f);
-        pieceOffset = new Vector2(0.5f, 0.5f); // Shouldn't need a piece offset. 
+        pieceOffset = new Vector2(0.5f, 0.5f);
         pieces = new Piece[8, 8];
         for (int x = 0; x < 8; x += 2)
         {
@@ -36,14 +37,12 @@ public class CheckersBoard : MonoBehaviour
             {
                 GeneratePiece(x + (y % 2), y);
             }
-        }
 
-        for (int x = 0; x < 8; x += 2)
-        {
             for (int y = 5; y < 8; y++)
             {
                 GeneratePiece(x + (y % 2), y);
             }
+
         }
     }
 
@@ -60,47 +59,98 @@ public class CheckersBoard : MonoBehaviour
 
     private void MovePiece(Piece p, int x, int y)
     {
+        if(p != null)
+        {
+            p.PositionUpdated(x, y);
+        }
+
         p.transform.position = Vector2.right * x + Vector2.up * y + boardOffset + pieceOffset;
     }
 
     private void TryMovePiece(int startX, int startY, int endX, int endY)
     {
-        startDrag = new Vector2(startX, startY);
-        endDrag = new Vector2(endX, endY);
-
-        Piece piece = pieces[startX, startY];
-
-        Debug.Log("Trying to move the piece.");
-
-        if (endX < 0 || endX >= pieces.Length || endY < 0 || endY >= pieces.Length)
+        selectedPiece = pieces[startX, startY];
+        if (selectedPiece == null)
         {
-            Debug.Log("Out of bounds.");
-            if (selectedPiece != null)
-            {
-                MovePiece(selectedPiece, startX, startY);
-            }
-            selectedPiece = null;         
-            startDrag = Vector2.zero;
             return;
         }
 
-        if(selectedPiece != null)
+        startDrag = new Vector2(startX, startY);
+        endDrag = new Vector2(endX, endY);
+
+        if (endX < 0 || endX >= pieces.Length || endY < 0 || endY >= pieces.Length)
         {
-            if(startDrag == endDrag)
+            MovePiece(selectedPiece, startX, startY);           
+            ResetSelectedPiece();
+            return;
+        }
+
+        if(startDrag == endDrag)
+        {
+            MovePiece(selectedPiece, startX, startY);
+            ResetSelectedPiece();
+            return;
+        }
+
+        if (selectedPiece.IsValidMove(pieces, startX, startY, endX, endY))
+        {
+            // Check if a piece was destroyed
+            if (Mathf.Abs(endX - startX) == 2)
             {
-                MovePiece(selectedPiece, startX, startY);
-                selectedPiece = null;
-                startDrag = Vector2.zero;
-                return;
+                Piece destroyedPiece = pieces[(startX + endX) / 2, (startY + endY) / 2];
+                pieces[(startX + endX) / 2, (startY + endY) / 2] = null;
+                Destroy(destroyedPiece.gameObject);        
+            }
+
+            pieces[endX, endY] = selectedPiece;
+            pieces[startX, startY] = null;
+            MovePiece(selectedPiece, endX, endY);
+            EndTurn();
+        }
+        else
+        {
+            MovePiece(selectedPiece, startX, startY);
+            ResetSelectedPiece();
+        }
+    }
+
+    private void ResetSelectedPiece()
+    {
+        selectedPiece = null;
+        startDrag = new Vector2(-1, -1);
+    }
+
+    private void EndTurn()
+    {
+        ResetSelectedPiece();
+        isWhiteTurn = !isWhiteTurn;
+    }
+
+    private void CheckVictory()
+    {
+        var pieces = FindObjectsOfType<Piece>();
+        var hasWhitePieces = false;
+        var hasBlackPieces = false;
+        foreach (Piece piece in pieces)
+        {
+            if(piece.isWhite)
+            {
+                hasWhitePieces = true;
+            } else
+            {
+                hasBlackPieces = true;
             }
         }
 
-        Debug.Log("Moving the piece.");
-        MovePiece(piece, endX, endY);
-        pieces[startX, startY] = null;
-        pieces[endX, endY] = piece;
-        selectedPiece = null;
-        startDrag = Vector2.zero;
+        if(!hasWhitePieces || !hasBlackPieces)
+        {
+            Victory(hasWhitePieces);
+        }
+    }
+
+    private void Victory(bool whiteVictory)
+    {
+
     }
 
     private void UpdatePieceDrag(Piece p)
@@ -120,7 +170,7 @@ public class CheckersBoard : MonoBehaviour
         }
 
         Piece p = pieces[x, y];
-        if(p != null)
+        if(p != null && p.isWhite == isWhiteTurn)
         {
             selectedPiece = p;
             startDrag = mouseOver;
@@ -148,7 +198,11 @@ public class CheckersBoard : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0))
         {
-            TryMovePiece((int) startDrag.x, (int) startDrag.y, x, y);
+            int startX = (int)startDrag.x;
+            int startY = (int)startDrag.y;
+            if (startX >= 0 && startY >= 0) {
+                TryMovePiece(startX, startY, x, y);
+            }
         }
     }
 
@@ -164,7 +218,5 @@ public class CheckersBoard : MonoBehaviour
         {
             mouseOver = new Vector2(-1, -1);
         }
-
-        mouseText.text = "MouseText: (" + (int) mouseOver.x + "," + (int) mouseOver.y + "). ";
     }
 }
