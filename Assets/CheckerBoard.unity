@@ -377,7 +377,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 759912dd2f6c8ae43b4f0fcb993b54be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  redPiecePrefab: {fileID: 1000010535509326, guid: 58cbbab58bb5eaa49b9523ad0f5f2cc4,
+  blackPiecePrefab: {fileID: 1000010535509326, guid: 58cbbab58bb5eaa49b9523ad0f5f2cc4,
     type: 2}
   whitePiecePrefab: {fileID: 1000013276728198, guid: 01905b6e2e3c92147b1869168faf1269,
     type: 2}

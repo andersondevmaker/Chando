@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CheckersBoard : MonoBehaviour
 {
     public Piece[,] pieces;
-    public GameObject redPiecePrefab;
+    public GameObject blackPiecePrefab;
     public GameObject whitePiecePrefab;
 
     public Vector2 boardOffset;
@@ -15,7 +16,10 @@ public class CheckersBoard : MonoBehaviour
     private Vector2 startDrag = new Vector2(-1, -1);
     private Vector2 endDrag = new Vector2(-1, -1);
 
-    private bool isWhite;
+    private List<Piece> forcedPieces;
+    private bool hasJumpedPiece = false;
+    private Piece activePiece;
+
     private bool isWhiteTurn;
     private Piece selectedPiece;
 
@@ -23,6 +27,7 @@ public class CheckersBoard : MonoBehaviour
     void Start()
     {
         isWhiteTurn = true;
+        forcedPieces = new List<Piece>();
         GenerateBoard();
     }
 
@@ -48,7 +53,7 @@ public class CheckersBoard : MonoBehaviour
 
     private void GeneratePiece(int x, int y)
     {
-        GameObject piecePrefab = y < 4 ? whitePiecePrefab : redPiecePrefab;
+        GameObject piecePrefab = y < 4 ? whitePiecePrefab : blackPiecePrefab;
         GameObject pieceGameObject = Instantiate(piecePrefab) as GameObject;
         pieceGameObject.transform.SetParent(transform);
         Piece piece = pieceGameObject.GetComponent<Piece>();
@@ -78,7 +83,7 @@ public class CheckersBoard : MonoBehaviour
         startDrag = new Vector2(startX, startY);
         endDrag = new Vector2(endX, endY);
 
-        if (endX < 0 || endX >= pieces.Length || endY < 0 || endY >= pieces.Length)
+        if (endX < 0 || endX >= 8 || endY < 0 || endY >= 8)
         {
             MovePiece(selectedPiece, startX, startY);           
             ResetSelectedPiece();
@@ -92,26 +97,81 @@ public class CheckersBoard : MonoBehaviour
             return;
         }
 
+        forcedPieces = FindForcedPieces();
+
         if (selectedPiece.IsValidMove(pieces, startX, startY, endX, endY))
         {
             // Check if a piece was destroyed
+            bool pieceDestroyed = false;
             if (Mathf.Abs(endX - startX) == 2)
             {
+                pieceDestroyed = true;
+            }
+
+            if(forcedPieces.Count != 0 && !pieceDestroyed)
+            {
+                MovePiece(selectedPiece, startX, startY);
+                ResetSelectedPiece();
+                return;
+            }
+
+            if (pieceDestroyed)
+            {
+                pieceDestroyed = true;
                 Piece destroyedPiece = pieces[(startX + endX) / 2, (startY + endY) / 2];
                 pieces[(startX + endX) / 2, (startY + endY) / 2] = null;
-                Destroy(destroyedPiece.gameObject);        
+                Destroy(destroyedPiece.gameObject);
+                hasJumpedPiece = true;
             }
 
             pieces[endX, endY] = selectedPiece;
             pieces[startX, startY] = null;
             MovePiece(selectedPiece, endX, endY);
-            EndTurn();
+
+            // If the selected piece can keep jumping then the turn is not complete.
+            if (selectedPiece.IsForcedToMove(pieces, endX, endY) && hasJumpedPiece)
+            {
+                activePiece = selectedPiece;
+                ResetSelectedPiece();
+            }
+            else
+            {
+                EndTurn();
+            }
         }
         else
         {
             MovePiece(selectedPiece, startX, startY);
             ResetSelectedPiece();
         }
+    }
+
+    private List<Piece> FindForcedPieces()
+    {
+        forcedPieces = new List<Piece>();
+
+        if(activePiece != null)
+        {
+            forcedPieces.Add(activePiece);
+            return forcedPieces;
+        }
+
+        for(int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                Piece p = pieces[x, y];
+                if (p && ((p.isWhite && isWhiteTurn) || (!p.isWhite && !isWhiteTurn)))
+                {
+                    if (p.IsForcedToMove(pieces, x, y))
+                    {
+                        forcedPieces.Add(p);
+                    }
+                }
+            }
+        }
+
+        return forcedPieces;
     }
 
     private void ResetSelectedPiece()
@@ -122,7 +182,10 @@ public class CheckersBoard : MonoBehaviour
 
     private void EndTurn()
     {
+        activePiece = null;
+        hasJumpedPiece = false;
         ResetSelectedPiece();
+        CheckVictory();
         isWhiteTurn = !isWhiteTurn;
     }
 
@@ -148,6 +211,7 @@ public class CheckersBoard : MonoBehaviour
         }
     }
 
+    // TODO: Implement
     private void Victory(bool whiteVictory)
     {
 
@@ -164,16 +228,20 @@ public class CheckersBoard : MonoBehaviour
 
     private void SelectPiece(int x, int y)
     {
-        if (x < 0 || x >= pieces.Length || y < 0 || y >= pieces.Length)
+        if (x < 0 || x >= 8 || y < 0 || y >= 8)     
         {
             return;
         }
 
+        forcedPieces = FindForcedPieces();
         Piece p = pieces[x, y];
         if(p != null && p.isWhite == isWhiteTurn)
         {
-            selectedPiece = p;
-            startDrag = mouseOver;
+            if (forcedPieces.Count == 0 || forcedPieces.Contains(p))
+            {
+                selectedPiece = p;
+                startDrag = mouseOver;
+            }
         }      
     }
 
