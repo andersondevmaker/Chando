@@ -1,2 +1,2 @@
-# unity-checkers
-A 2D Unity implementation of checkers
+# Chando
+A 2D Unity implementation of checkers.  
