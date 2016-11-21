@@ -4,7 +4,6 @@ using System.Collections;
 public class Piece : MonoBehaviour {
     public bool isWhite;
     public bool isKing = false;
-    private bool hasJumpedPiece;
 
     private SpriteRenderer spriteRenderer;
     public Sprite peasantSprite;
@@ -30,13 +29,62 @@ public class Piece : MonoBehaviour {
         }
     }
 
+    public bool IsForcedToMove(Piece[,] board, int x, int y)
+    {
+        if(isWhite || isKing)
+        {
+            // Check if there is an enemy piece above and to the left, and a place to land after jumping the piece. 
+            if (x >= 2 && y <= 5)
+            {
+                Piece p = board[x - 1, y + 1];
+                if(p != null && p.isWhite != isWhite && board[x - 2, y + 2] == null)
+                {
+                    return true;
+                }
+            }
+
+            // Check if there is an enemy piece above and to the right, and a place to land after jumping the piece. 
+            if (x <= 5 && y <= 5)
+            {
+                Piece p = board[x + 1, y + 1];
+                if (p != null && p.isWhite != isWhite && board[x + 2, y + 2] == null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (!isWhite || isKing)
+        {
+            // Check if there is an enemy piece below and to the left, and a place to land after jumping the piece. 
+            if (x >= 2 && y >= 2)
+            {
+                Piece p = board[x - 1, y - 1];
+                if (p != null && p.isWhite != isWhite && board[x - 2, y - 2] == null)
+                {
+                    return true;
+                }
+            }
+
+            // Check if there is an enemy piece below and to the right, and a place to land after jumping the piece. 
+            if (x <= 5 && y >= 2)
+            {
+                Piece p = board[x + 1, y - 1];
+                if (p != null && p.isWhite != isWhite && board[x + 2, y - 2] == null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 	public bool IsValidMove(Piece[,] board, int startX, int startY, int endX, int endY)
     {
         if (board[endX, endY] != null)
-        {
             return false;
-        }
-
+        
         int deltaMoveX = Mathf.Abs(endX - startX);
         int deltaMoveY =  endY - startY;
 
