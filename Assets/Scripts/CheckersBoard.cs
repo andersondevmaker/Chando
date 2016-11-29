@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public class CheckersBoard : MonoBehaviour
 {
+    public GameStateManager gameStateManager;
+
     public Piece[,] pieces;
     public GameObject blackPiecePrefab;
     public GameObject whitePiecePrefab;
@@ -13,22 +15,48 @@ public class CheckersBoard : MonoBehaviour
     public Vector2 pieceOffset;
 
     private Vector2 mouseOver;
-    private Vector2 startDrag = new Vector2(-1, -1);
-    private Vector2 endDrag = new Vector2(-1, -1);
+    private Vector2 startDrag;
+    private Vector2 endDrag;
 
     private List<Piece> forcedPieces;
-    private bool hasJumpedPiece = false;
+    private bool hasJumpedPiece;
     private Piece activePiece;
 
     private bool isWhiteTurn;
     private Piece selectedPiece;
 
+
     // Use this for initialization
     void Start()
     {
+        activePiece = null;
         isWhiteTurn = true;
+        hasJumpedPiece = false;
+        startDrag = new Vector2(-1, -1);
+        endDrag = new Vector2(-1, -1);
         forcedPieces = new List<Piece>();
         GenerateBoard();
+    }
+
+    public void NewGame()
+    {
+        DisposeOfPreviousBoard();
+        Start();
+    }
+
+    protected void DisposeOfPreviousBoard()
+    {
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                Piece p = pieces[x, y];
+                if(p != null)
+                {
+                    Destroy(p.gameObject);
+                }
+            }
+        }
     }
 
     private void GenerateBoard()
@@ -207,14 +235,13 @@ public class CheckersBoard : MonoBehaviour
 
         if(!hasWhitePieces || !hasBlackPieces)
         {
-            Victory(hasWhitePieces);
+            Victory(hasBlackPieces);
         }
     }
 
-    // TODO: Implement
-    private void Victory(bool whiteVictory)
+    private void Victory(bool blackVictory)
     {
-
+        gameStateManager.GameOver(blackVictory);
     }
 
     private void UpdatePieceDrag(Piece p)
