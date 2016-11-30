@@ -5,36 +5,64 @@ using System.Collections.Generic;
 
 public class CheckersBoard : MonoBehaviour
 {
+    public GameStateManager gameStateManager;
+
     public Piece[,] pieces;
     public GameObject blackPiecePrefab;
     public GameObject whitePiecePrefab;
 
     public Vector2 boardOffset;
     public Vector2 pieceOffset;
+    private int scale;
 
     private Vector2 mouseOver;
-    private Vector2 startDrag = new Vector2(-1, -1);
-    private Vector2 endDrag = new Vector2(-1, -1);
+    private Vector2 startDrag;
+    private Vector2 endDrag;
 
     private List<Piece> forcedPieces;
-    private bool hasJumpedPiece = false;
+    private bool hasJumpedPiece;
     private Piece activePiece;
 
     private bool isWhiteTurn;
     private Piece selectedPiece;
 
-    // Use this for initialization
-    void Start()
+
+
+    public void NewGame()
     {
+        DisposeOfPreviousBoard();
+        activePiece = null;
         isWhiteTurn = true;
+        hasJumpedPiece = false;
+        startDrag = new Vector2(-1, -1);
+        endDrag = new Vector2(-1, -1);
         forcedPieces = new List<Piece>();
         GenerateBoard();
     }
 
+    protected void DisposeOfPreviousBoard()
+    {
+        if (pieces != null)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                for (int y = 0; y < 8; y++)
+                {
+                    Piece p = pieces[x, y];
+                    if (p != null)
+                    {
+                        Destroy(p.gameObject);
+                    }
+                }
+            }
+        }
+    }
+
     private void GenerateBoard()
     {
-        boardOffset = new Vector2(-4f, -4f);
-        pieceOffset = new Vector2(0.5f, 0.5f);
+        boardOffset = new Vector2(-16f, -16f);
+        pieceOffset = new Vector2(2f, 2f);
+        scale = 4;
         pieces = new Piece[8, 8];
         for (int x = 0; x < 8; x += 2)
         {
@@ -69,7 +97,7 @@ public class CheckersBoard : MonoBehaviour
             p.PositionUpdated(x, y);
         }
 
-        p.transform.position = Vector2.right * x + Vector2.up * y + boardOffset + pieceOffset;
+        p.transform.position = Vector2.right * x * 4 + Vector2.up * y * 4 + boardOffset + pieceOffset;
     }
 
     private void TryMovePiece(int startX, int startY, int endX, int endY)
@@ -191,30 +219,36 @@ public class CheckersBoard : MonoBehaviour
 
     private void CheckVictory()
     {
-        var pieces = FindObjectsOfType<Piece>();
         var hasWhitePieces = false;
         var hasBlackPieces = false;
-        foreach (Piece piece in pieces)
+        for (int x = 0; x < 8; x++)
         {
-            if(piece.isWhite)
+            for (int y = 0; y < 8; y++)
             {
-                hasWhitePieces = true;
-            } else
-            {
-                hasBlackPieces = true;
+                Piece piece = pieces[x, y];
+                if (piece != null)
+                {
+                    if (piece.isWhite)
+                    {
+                        hasWhitePieces = true;
+                    }
+                    else
+                    {
+                        hasBlackPieces = true;
+                    }
+                }
             }
         }
 
         if(!hasWhitePieces || !hasBlackPieces)
         {
-            Victory(hasWhitePieces);
+            Victory(hasBlackPieces);
         }
     }
 
-    // TODO: Implement
-    private void Victory(bool whiteVictory)
+    private void Victory(bool blackVictory)
     {
-
+        gameStateManager.GameOver(blackVictory);
     }
 
     private void UpdatePieceDrag(Piece p)
@@ -279,8 +313,8 @@ public class CheckersBoard : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
         if (hit)
         {
-            mouseOver.x = (int)(hit.point.x - boardOffset.x);
-            mouseOver.y = (int)(hit.point.y - boardOffset.y);
+            mouseOver.x = (int)((hit.point.x - boardOffset.x)/scale);
+            mouseOver.y = (int)((hit.point.y - boardOffset.y)/scale);
         }
         else
         {
