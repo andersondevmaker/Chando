@@ -13,6 +13,7 @@ public class CheckersBoard : MonoBehaviour
 
     public Vector2 boardOffset;
     public Vector2 pieceOffset;
+    private int scale;
 
     private Vector2 mouseOver;
     private Vector2 startDrag;
@@ -26,9 +27,10 @@ public class CheckersBoard : MonoBehaviour
     private Piece selectedPiece;
 
 
-    // Use this for initialization
-    void Start()
+
+    public void NewGame()
     {
+        DisposeOfPreviousBoard();
         activePiece = null;
         isWhiteTurn = true;
         hasJumpedPiece = false;
@@ -38,22 +40,19 @@ public class CheckersBoard : MonoBehaviour
         GenerateBoard();
     }
 
-    public void NewGame()
-    {
-        DisposeOfPreviousBoard();
-        Start();
-    }
-
     protected void DisposeOfPreviousBoard()
     {
-        for (int x = 0; x < 8; x++)
+        if (pieces != null)
         {
-            for (int y = 0; y < 8; y++)
+            for (int x = 0; x < 8; x++)
             {
-                Piece p = pieces[x, y];
-                if(p != null)
+                for (int y = 0; y < 8; y++)
                 {
-                    Destroy(p.gameObject);
+                    Piece p = pieces[x, y];
+                    if (p != null)
+                    {
+                        Destroy(p.gameObject);
+                    }
                 }
             }
         }
@@ -61,8 +60,9 @@ public class CheckersBoard : MonoBehaviour
 
     private void GenerateBoard()
     {
-        boardOffset = new Vector2(-4f, -4f);
-        pieceOffset = new Vector2(0.5f, 0.5f);
+        boardOffset = new Vector2(-16f, -16f);
+        pieceOffset = new Vector2(2f, 2f);
+        scale = 4;
         pieces = new Piece[8, 8];
         for (int x = 0; x < 8; x += 2)
         {
@@ -97,7 +97,7 @@ public class CheckersBoard : MonoBehaviour
             p.PositionUpdated(x, y);
         }
 
-        p.transform.position = Vector2.right * x + Vector2.up * y + boardOffset + pieceOffset;
+        p.transform.position = Vector2.right * x * 4 + Vector2.up * y * 4 + boardOffset + pieceOffset;
     }
 
     private void TryMovePiece(int startX, int startY, int endX, int endY)
@@ -219,17 +219,24 @@ public class CheckersBoard : MonoBehaviour
 
     private void CheckVictory()
     {
-        var pieces = FindObjectsOfType<Piece>();
         var hasWhitePieces = false;
         var hasBlackPieces = false;
-        foreach (Piece piece in pieces)
+        for (int x = 0; x < 8; x++)
         {
-            if(piece.isWhite)
+            for (int y = 0; y < 8; y++)
             {
-                hasWhitePieces = true;
-            } else
-            {
-                hasBlackPieces = true;
+                Piece piece = pieces[x, y];
+                if (piece != null)
+                {
+                    if (piece.isWhite)
+                    {
+                        hasWhitePieces = true;
+                    }
+                    else
+                    {
+                        hasBlackPieces = true;
+                    }
+                }
             }
         }
 
@@ -306,8 +313,8 @@ public class CheckersBoard : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
         if (hit)
         {
-            mouseOver.x = (int)(hit.point.x - boardOffset.x);
-            mouseOver.y = (int)(hit.point.y - boardOffset.y);
+            mouseOver.x = (int)((hit.point.x - boardOffset.x)/scale);
+            mouseOver.y = (int)((hit.point.y - boardOffset.y)/scale);
         }
         else
         {
