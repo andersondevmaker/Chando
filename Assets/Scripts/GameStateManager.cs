@@ -1,21 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class GameStateManager : MonoBehaviour {
     public Transform canvas;
-    public Transform victoryText;
     public CheckersBoard board;
-    
+    public Text victoryText;
 
-    void Update () {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            toggleMenu();
-        }
+    void Start()
+    {
+        victoryText.gameObject.SetActive(false);
+        board.NewGame();
     }
 
     public void newGame()
     {
+        victoryText.gameObject.SetActive(false);
         board.NewGame();
         toggleMenu(false);
     }
@@ -38,6 +38,9 @@ public class GameStateManager : MonoBehaviour {
 
     public void GameOver(bool blackVictory)
     {
-        // victoryText\
+        string victoryTextStr = blackVictory ? "BLACK WINS!" : "RED WINS!";
+        victoryText.text = victoryTextStr;
+        victoryText.gameObject.SetActive(true);
+        toggleMenu(true);
     }
 }
