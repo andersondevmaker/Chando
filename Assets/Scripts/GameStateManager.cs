@@ -4,26 +4,53 @@ using UnityEngine.UI;
 
 public class GameStateManager : MonoBehaviour {
     public Transform canvas;
-    public CheckersBoard board;
+    public CheckersBoard checkersBoard;
+    public ChessBoard chessBoard;
+    private GameBoard activeBoard;
     public Text victoryText;
+    public Button resumeButton;
 
     void Start()
     {
-        victoryText.gameObject.SetActive(false);
-        board.NewGame();
+        newCheckersGame();
+        toggleMenu(false);
     }
 
-    public void newGame()
+    public void newCheckersGame()
     {
         victoryText.gameObject.SetActive(false);
-        board.NewGame();
+        activateBoard(checkersBoard);
+        activeBoard.NewGame();
         toggleMenu(false);
+        resumeButton.enabled = true;
+    }
+
+    public void newChessGame()
+    {
+        victoryText.gameObject.SetActive(false);
+        activateBoard(chessBoard);
+        activeBoard.NewGame();
+        toggleMenu(false);
+        resumeButton.enabled = true;
+    }
+
+    private void activateBoard(GameBoard board)
+    {
+        victoryText.gameObject.SetActive(false);
+        checkersBoard.gameObject.SetActive(false);
+        chessBoard.gameObject.SetActive(false);
+        checkersBoard.enabled = false;
+        chessBoard.enabled = false;
+
+        activeBoard = board;
+        activeBoard.gameObject.SetActive(true);
+        activeBoard.enabled = true;
     }
 
     private void toggleMenu(bool menuEnabled)
     {
         canvas.gameObject.SetActive(menuEnabled);
-        board.enabled = !menuEnabled;
+        activeBoard.enabled = !menuEnabled;
     }
 
     public void toggleMenu()

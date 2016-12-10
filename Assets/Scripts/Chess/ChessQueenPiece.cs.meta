@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 9db3eec7383ec7f4bbc4ba84053c199c
+timeCreated: 1481339755
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - whiteSprite: {fileID: 21300000, guid: 489faa0ac370d73459c94cc211ca3530, type: 3}
+  - blackSprite: {fileID: 21300000, guid: 967b645ffc64cc5419fe24ff3b423814, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
