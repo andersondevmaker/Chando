@@ -54,6 +54,5 @@ public abstract class Piece : MonoBehaviour {
 	public virtual bool IsValidMove(Piece[,] board, int startX, int startY, int endX, int endY)
     {
         return true;
-
     }
 }
